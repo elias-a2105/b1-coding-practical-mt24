@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from .terrain import generate_reference_and_limits
 
 class Submarine:
@@ -75,8 +76,19 @@ class Mission:
 
     @classmethod
     def from_csv(cls, file_name: str):
-        # You are required to implement this method
-        pass
+        # Read a CSV containing columns: reference,cave_height,cave_depth
+        df = pd.read_csv(file_name)
+
+        # Validate expected columns exist
+        expected = {"reference", "cave_height", "cave_depth"}
+        if not expected.issubset(df.columns):
+            raise ValueError(f"CSV must contain columns: {expected}")
+
+        reference = df["reference"].to_numpy(dtype=float)
+        cave_height = df["cave_height"].to_numpy(dtype=float)
+        cave_depth = df["cave_depth"].to_numpy(dtype=float)
+
+        return cls(reference=reference, cave_height=cave_height, cave_depth=cave_depth)
 
 
 class ClosedLoop:
