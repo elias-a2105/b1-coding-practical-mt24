@@ -106,10 +106,25 @@ class ClosedLoop:
         actions = np.zeros(T)
         self.plant.reset_state()
 
+        # If controller has a reset method, call it to ensure deterministic runs
+        if hasattr(self.controller, "reset"):
+            try:
+                self.controller.reset()
+            except Exception:
+                pass
+
         for t in range(T):
             positions[t] = self.plant.get_position()
             observation_t = self.plant.get_depth()
-            # Call your controller here
+            reference_t = mission.reference[t]
+
+            # Controller may expose different APIs; prefer `control(reference, observation)`
+            if hasattr(self.controller, "control"):
+                actions[t] = float(self.controller.control(reference_t, observation_t))
+            else:
+                # Fallback: call the controller directly as a callable
+                actions[t] = float(self.controller(reference_t, observation_t))
+
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
